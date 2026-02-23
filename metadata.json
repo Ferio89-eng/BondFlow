@@ -1,0 +1,5 @@
+{
+  "name": "Bond Cash Flow Visualizer",
+  "description": "A professional tool to visualize bond cash flows, including coupons, taxes, and bank commissions with a detailed bar chart.",
+  "requestFramePermissions": []
+}
