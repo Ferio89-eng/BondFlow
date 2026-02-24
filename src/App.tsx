@@ -34,7 +34,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Toggle visivamente affidabile anche su browser TV - usa left invece di transform */
+/** Toggle visivamente affidabile anche su browser TV - colori ad alto contrasto quando ON */
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <label className="flex items-center gap-3 cursor-pointer group shrink-0">
@@ -45,10 +45,22 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
           onChange={(e) => onChange(e.target.checked)}
           className="sr-only"
         />
-        <div className={cn("w-10 h-5 rounded-full transition-colors", checked ? "bg-emerald-600" : "bg-black/10")} />
         <div
-          className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-[left] duration-200"
-          style={{ left: checked ? 20 : 4 }}
+          className="w-10 h-5 rounded-full transition-colors"
+          style={{
+            backgroundColor: checked ? '#047857' : 'rgba(0,0,0,0.1)',
+            border: checked ? '2px solid #064e3b' : 'none',
+            boxShadow: checked ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : 'none'
+          }}
+        />
+        <div
+          className="absolute top-1 w-3 h-3 rounded-full transition-[left] duration-200"
+          style={{
+            left: checked ? 20 : 4,
+            backgroundColor: '#ffffff',
+            border: checked ? '2px solid #064e3b' : '1px solid rgba(0,0,0,0.2)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.25)'
+          }}
         />
       </div>
       <span className="text-xs font-bold text-black/60 uppercase tracking-wider">{label}</span>
