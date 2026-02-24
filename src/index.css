@@ -26,3 +26,12 @@
 [data-lg-tv] label.cursor-pointer > div:first-child { min-width: 44px; min-height: 44px; }
 /* Area grafico più leggibile da distanza */
 [data-lg-tv] main { padding: 1.5rem; }
+/* Card Riepilogo: contrasto massimo su TV */
+[data-lg-tv] aside section:last-of-type {
+  background-color: #064e3b !important;
+  color: #ffffff !important;
+}
+[data-lg-tv] aside section:last-of-type span,
+[data-lg-tv] aside section:last-of-type h3 {
+  color: #ffffff !important;
+}

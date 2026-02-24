@@ -34,6 +34,30 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Toggle visivamente affidabile anche su browser TV (evita peer-checked) */
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label className="flex items-center gap-3 cursor-pointer group">
+      <div className="relative flex items-center">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="sr-only"
+        />
+        <div className={cn("w-10 h-5 rounded-full transition-colors", checked ? "bg-emerald-600" : "bg-black/10")} />
+        <div
+          className={cn(
+            "absolute left-1 w-3 h-3 bg-white rounded-full transition-transform shadow-sm",
+            checked ? "translate-x-5" : "translate-x-0"
+          )}
+        />
+      </div>
+      <span className="text-xs font-bold text-black/60 uppercase tracking-wider">{label}</span>
+    </label>
+  );
+}
+
 /** Rileva browser LG Smart TV (Web0S, SmartTV, LG Browser) per ottimizzazioni visualizzazione */
 function isLgTvBrowser(): boolean {
   if (typeof navigator === 'undefined') return false;
@@ -322,81 +346,30 @@ export default function App() {
               </div>
 
               <div className="pt-4 space-y-4 border-t border-black/5">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={showCumulative}
-                      onChange={(e) => setShowCumulative(e.target.checked)}
-                      className="peer sr-only"
-                    />
-                    <div className="w-10 h-5 bg-black/10 rounded-full peer-checked:bg-emerald-600 transition-colors" />
-                    <div className="absolute left-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow-sm" />
-                  </div>
-                  <span className="text-xs font-bold text-black/60 uppercase tracking-wider">Mostra Cumulata</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={showNominal}
-                      onChange={(e) => setShowNominal(e.target.checked)}
-                      className="peer sr-only"
-                    />
-                    <div className="w-10 h-5 bg-black/10 rounded-full peer-checked:bg-emerald-600 transition-colors" />
-                    <div className="absolute left-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow-sm" />
-                  </div>
-                  <span className="text-xs font-bold text-black/60 uppercase tracking-wider">Mostra Nominale</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={includeNominalAtT0}
-                      onChange={(e) => setIncludeNominalAtT0(e.target.checked)}
-                      className="peer sr-only"
-                    />
-                    <div className="w-10 h-5 bg-black/10 rounded-full peer-checked:bg-emerald-600 transition-colors" />
-                    <div className="absolute left-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow-sm" />
-                  </div>
-                  <span className="text-xs font-bold text-black/60 uppercase tracking-wider">Nominale T0 Reale</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={sellAtMaturity}
-                      onChange={(e) => setSellAtMaturity(e.target.checked)}
-                      className="peer sr-only"
-                    />
-                    <div className="w-10 h-5 bg-black/10 rounded-full peer-checked:bg-emerald-600 transition-colors" />
-                    <div className="absolute left-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow-sm" />
-                  </div>
-                  <span className="text-xs font-bold text-black/60 uppercase tracking-wider">Vendita a Scadenza</span>
-                </label>
+                <Toggle checked={showCumulative} onChange={setShowCumulative} label="Mostra Cumulata" />
+                <Toggle checked={showNominal} onChange={setShowNominal} label="Mostra Nominale" />
+                <Toggle checked={includeNominalAtT0} onChange={setIncludeNominalAtT0} label="Nominale T0 Reale" />
+                <Toggle checked={sellAtMaturity} onChange={setSellAtMaturity} label="Vendita a Scadenza" />
               </div>
             </div>
           </section>
 
-          {/* Summary Card */}
-          <section className="bg-emerald-900 text-white rounded-2xl p-6 shadow-xl shadow-emerald-900/20 space-y-4">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Riepilogo Totale</h3>
+          {/* Summary Card - contrasto alto per leggibilità */}
+          <section className="bg-[#064e3b] text-white rounded-2xl p-6 shadow-xl shadow-emerald-900/20 space-y-4">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">Riepilogo Totale</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <span className="text-xs opacity-70">Entrate Totali</span>
-                <span className="font-mono font-bold">€ {totalPositive.toLocaleString()}</span>
+                <span className="text-xs text-white">Entrate Totali</span>
+                <span className="font-mono font-bold text-white">€ {totalPositive.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-end">
-                <span className="text-xs opacity-70">Uscite Totali</span>
-                <span className="font-mono font-bold text-emerald-300">€ {totalNegative.toLocaleString()}</span>
+                <span className="text-xs text-white">Uscite Totali</span>
+                <span className="font-mono font-bold text-white">€ {totalNegative.toLocaleString()}</span>
               </div>
-              <div className="h-px bg-white/10 my-2" />
+              <div className="h-px bg-white/30 my-2" />
               <div className="flex justify-between items-end">
-                <span className="text-sm font-bold">Guadagno Netto</span>
-                <span className="text-xl font-mono font-bold text-emerald-400">
+                <span className="text-sm font-bold text-white">Guadagno Netto</span>
+                <span className="text-xl font-mono font-bold text-white">
                   € {netProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </span>
               </div>
