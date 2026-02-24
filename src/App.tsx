@@ -34,11 +34,11 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Toggle visivamente affidabile anche su browser TV (evita peer-checked) */
+/** Toggle visivamente affidabile anche su browser TV - usa left invece di transform */
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer group">
-      <div className="relative flex items-center">
+    <label className="flex items-center gap-3 cursor-pointer group shrink-0">
+      <div className="relative flex items-center shrink-0 overflow-visible" style={{ width: 40, height: 20 }}>
         <input
           type="checkbox"
           checked={checked}
@@ -47,10 +47,8 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
         />
         <div className={cn("w-10 h-5 rounded-full transition-colors", checked ? "bg-emerald-600" : "bg-black/10")} />
         <div
-          className={cn(
-            "absolute left-1 w-3 h-3 bg-white rounded-full transition-transform shadow-sm",
-            checked ? "translate-x-5" : "translate-x-0"
-          )}
+          className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-[left] duration-200"
+          style={{ left: checked ? 20 : 4 }}
         />
       </div>
       <span className="text-xs font-bold text-black/60 uppercase tracking-wider">{label}</span>
@@ -265,7 +263,7 @@ export default function App() {
       <main className="max-w-[1600px] mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         {/* Sidebar Inputs */}
         <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
-          <section className="bg-white rounded-2xl p-6 shadow-sm border border-black/5 space-y-6">
+          <section className="bg-white rounded-2xl p-6 shadow-sm border border-black/5 space-y-6 overflow-visible">
             <div className="flex items-center gap-2 pb-2 border-b border-black/5">
               <Info size={18} className="text-emerald-600" />
               <h2 className="font-bold text-sm uppercase tracking-wider">Parametri Obbligazione</h2>
@@ -345,7 +343,7 @@ export default function App() {
                 </select>
               </div>
 
-              <div className="pt-4 space-y-4 border-t border-black/5">
+              <div className="pt-4 space-y-4 border-t border-black/5 overflow-visible">
                 <Toggle checked={showCumulative} onChange={setShowCumulative} label="Mostra Cumulata" />
                 <Toggle checked={showNominal} onChange={setShowNominal} label="Mostra Nominale" />
                 <Toggle checked={includeNominalAtT0} onChange={setIncludeNominalAtT0} label="Nominale T0 Reale" />

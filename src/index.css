@@ -21,11 +21,12 @@
 /* Riduce ombre pesanti per performance su TV */
 [data-lg-tv] .shadow-xl { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
 [data-lg-tv] .shadow-2xl { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
-/* Checkbox/toggle più grandi per telecomando */
+/* Toggle: area cliccabile ampia per telecomando, senza forzare dimensioni che causano clipping */
 [data-lg-tv] label.cursor-pointer { min-height: 48px; padding: 0.5rem 0; }
-[data-lg-tv] label.cursor-pointer > div:first-child { min-width: 44px; min-height: 44px; }
 /* Area grafico più leggibile da distanza */
 [data-lg-tv] main { padding: 1.5rem; }
+/* Sidebar scrollabile su TV se il contenuto non entra */
+[data-lg-tv] aside { overflow-y: auto; }
 /* Card Riepilogo: contrasto massimo su TV */
 [data-lg-tv] aside section:last-of-type {
   background-color: #064e3b !important;
