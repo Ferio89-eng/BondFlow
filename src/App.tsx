@@ -53,13 +53,18 @@ interface CashFlowData {
 }
 
 export default function App() {
+  const [isMounted, setIsMounted] = useState(false);
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Input states
   const [nominal, setNominal] = useState<number>(10000);
   const [currentPrice, setCurrentPrice] = useState<number>(98.5);
   const [sellingPrice, setSellingPrice] = useState<number>(100);
   const [taxRate, setTaxRate] = useState<number>(12.5); // Default for government bonds in Italy
   const [couponRate, setCouponRate] = useState<number>(3.5);
-  const [bankCommission, setBankCommission] = useState<number>(7); // 7 per mille default
+  const [bankCommission, setBankCommission] = useState<number>(2); // 2 per mille default
   const [periodicity, setPeriodicity] = useState<'annual' | 'semiannual'>('annual');
   const [maturityDate, setMaturityDate] = useState<string>(() => {
     const d = new Date();
@@ -73,17 +78,18 @@ export default function App() {
   const [sellAtMaturity, setSellAtMaturity] = useState<boolean>(true);
   const [showNominal, setShowNominal] = useState<boolean>(false);
 
+  const durationYears = useMemo(() => {
+    const today = new Date();
+    const maturity = new Date(maturityDate);
+    const diffTime = Math.max(0, maturity.getTime() - today.getTime());
+    return diffTime / (1000 * 60 * 60 * 24 * 365.25);
+  }, [maturityDate]);
+
   const cashFlows = useMemo(() => {
     const data: CashFlowData[] = [];
     const periodsPerYear = periodicity === 'annual' ? 1 : 2;
     
-    // Calculate years from maturity date
-    const today = new Date();
-    const maturity = new Date(maturityDate);
-    const diffTime = Math.max(0, maturity.getTime() - today.getTime());
-    const years = diffTime / (1000 * 60 * 60 * 24 * 365.25);
-    
-    const totalPeriods = Math.max(1, Math.ceil(years * periodsPerYear));
+    const totalPeriods = Math.max(1, Math.ceil(durationYears * periodsPerYear));
     
     const taxDecimal = taxRate / 100;
     const couponDecimal = (couponRate / 100) / periodsPerYear;
@@ -165,7 +171,7 @@ export default function App() {
     }
 
     return data;
-  }, [nominal, currentPrice, sellingPrice, taxRate, couponRate, bankCommission, periodicity, maturityDate, includeNominalAtT0, sellAtMaturity, showNominal]);
+  }, [nominal, currentPrice, sellingPrice, taxRate, couponRate, bankCommission, periodicity, durationYears, includeNominalAtT0, sellAtMaturity, showNominal]);
 
   const totalPositive = cashFlows.reduce((sum, item, idx) => {
     // Count nominal only at maturity (last item) for actual profit calculation
@@ -180,37 +186,44 @@ export default function App() {
   // Initial investment is the purchase cost at T0
   const initialInvestment = Math.abs(cashFlows[0]?.negative || 1);
   const totalReturnPercent = (netProfit / initialInvestment) * 100;
+  const avgAnnualReturn = durationYears > 0 ? totalReturnPercent / durationYears : totalReturnPercent;
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans selection:bg-emerald-100">
       {/* Header */}
-      <header className="border-b border-black/5 bg-white px-6 py-4 flex items-center justify-between sticky top-0 z-10 backdrop-blur-md bg-white/80">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-            <TrendingUp size={24} />
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-black/5 px-4 sm:px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="bg-emerald-600 p-2 sm:p-2.5 rounded-xl shadow-lg shadow-emerald-600/20">
+            <TrendingUp className="text-white" size={20} />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">BondFlow</h1>
-            <p className="text-xs text-black/40 font-medium uppercase tracking-wider">Visualizzatore Flusso di Cassa</p>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tighter text-black leading-none">BondFlow</h1>
+            <p className="text-[9px] sm:text-[10px] text-black/40 uppercase font-bold tracking-widest mt-1">Visualizzatore Flusso di Cassa</p>
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-8">
+        <div className="flex items-center gap-4 sm:gap-8">
           <div className="text-right">
-            <p className="text-[10px] text-black/40 uppercase font-bold tracking-widest">Rendimento Totale</p>
-            <p className={cn("text-lg font-mono font-bold", totalReturnPercent >= 0 ? "text-emerald-600" : "text-red-600")}>
+            <p className="text-[8px] sm:text-[10px] text-black/40 uppercase font-bold tracking-widest">Rendimento Annuo</p>
+            <p className={cn("text-sm sm:text-lg font-mono font-bold leading-none mt-1", avgAnnualReturn >= 0 ? "text-emerald-600" : "text-red-600")}>
+              {avgAnnualReturn >= 0 ? '+' : ''}{avgAnnualReturn.toFixed(2)}%
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[8px] sm:text-[10px] text-black/40 uppercase font-bold tracking-widest">Rendimento</p>
+            <p className={cn("text-sm sm:text-lg font-mono font-bold leading-none mt-1", totalReturnPercent >= 0 ? "text-emerald-600" : "text-red-600")}>
               {totalReturnPercent >= 0 ? '+' : ''}{totalReturnPercent.toFixed(2)}%
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-black/40 uppercase font-bold tracking-widest">Profitto Netto</p>
-            <p className={cn("text-lg font-mono font-bold", netProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
-              € {netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <p className="text-[8px] sm:text-[10px] text-black/40 uppercase font-bold tracking-widest">Profitto</p>
+            <p className={cn("text-sm sm:text-lg font-mono font-bold leading-none mt-1", netProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
+              € {netProfit.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </p>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="max-w-[1600px] mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         {/* Sidebar Inputs */}
         <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
           <section className="bg-white rounded-2xl p-6 shadow-sm border border-black/5 space-y-6">
@@ -378,19 +391,19 @@ export default function App() {
 
         {/* Chart Area */}
         <section className="lg:col-span-8 xl:col-span-9 space-y-6">
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-black/5 h-[600px] flex flex-col">
-            <div className="flex items-center justify-between mb-8">
+          <div className="bg-white rounded-2xl p-4 sm:p-8 shadow-sm border border-black/5 h-[550px] sm:h-[600px] flex flex-col">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
               <div className="relative">
-                <h2 className="text-4xl font-black tracking-tighter text-black uppercase italic leading-none">
+                <h2 className="text-3xl sm:text-4xl font-black tracking-tighter text-black uppercase italic leading-none">
                   Flusso <span className="text-emerald-600">di</span> Cassa
                 </h2>
                 <div className="h-1 w-12 bg-emerald-600 mt-2 rounded-full" />
                 <p className="text-[10px] font-bold text-black/30 uppercase tracking-[0.3em] mt-2">Analisi Temporale & Break-even</p>
               </div>
-              <div className="flex gap-4 items-center text-[10px] font-bold uppercase tracking-widest">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm bg-emerald-500/30 border border-emerald-500/50" />
-                  <span>Nominale T0 (Figurativo)</span>
+                  <span>Nominale T0 (Fig.)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm bg-emerald-500" />
@@ -403,112 +416,114 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex-1 min-h-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart
-                  data={cashFlows}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                  stackOffset="sign"
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#00000010" />
-                  <XAxis 
-                    dataKey="time" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fontWeight: 600, fill: '#00000040' }}
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fontWeight: 600, fill: '#00000040' }}
-                    tickFormatter={(value) => `€${value.toLocaleString()}`}
-                  />
-                  <Tooltip 
-                    cursor={{ fill: '#00000005' }}
-                    content={<CustomTooltip />}
-                  />
-                  <ReferenceLine y={0} stroke="#00000020" />
-                  
-                  <Bar dataKey="positive" stackId="stack">
-                    {cashFlows.map((entry, index) => (
-                      <Cell 
-                        key={`cell-pos-${index}`} 
-                        fill={index === 0 ? '#10B98133' : '#10B981'} 
-                        stroke={index === 0 ? '#10B981' : 'none'}
-                        strokeWidth={index === 0 ? 1 : 0}
-                        radius={index === 0 ? [4, 4, 0, 0] : [2, 2, 0, 0]}
-                      />
-                    ))}
-                  </Bar>
-                  <Bar dataKey="negative" stackId="stack">
-                    {cashFlows.map((entry, index) => (
-                      <Cell 
-                        key={`cell-neg-${index}`} 
-                        fill={'#EF4444'} 
-                        stroke={'none'}
-                        strokeWidth={0}
-                        radius={[0, 0, 4, 4]}
-                      />
-                    ))}
-                  </Bar>
-
-                  {showCumulative && (
-                    <Line 
-                      type="monotone" 
-                      dataKey="cumulative" 
-                      stroke="#2563eb" 
-                      strokeWidth={3}
-                      dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
+            <div className="flex-1 relative">
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={cashFlows}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                    stackOffset="sign"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#00000010" />
+                    <XAxis 
+                      dataKey="time" 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fontWeight: 600, fill: '#00000040' }}
+                      dy={10}
                     />
-                  )}
-                </ComposedChart>
-              </ResponsiveContainer>
+                    <YAxis 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fontWeight: 600, fill: '#00000040' }}
+                      tickFormatter={(value) => `€${value.toLocaleString()}`}
+                    />
+                    <Tooltip 
+                      cursor={{ fill: '#00000005' }}
+                      content={<CustomTooltip />}
+                    />
+                    <ReferenceLine y={0} stroke="#00000020" />
+                    
+                    <Bar dataKey="positive" stackId="stack">
+                      {cashFlows.map((entry, index) => (
+                        <Cell 
+                          key={`cell-pos-${index}`} 
+                          fill={entry.details.inflows.some(inf => inf.isFigurative) ? '#10B98133' : '#10B981'} 
+                          stroke={entry.details.inflows.some(inf => inf.isFigurative) ? '#10B981' : 'none'}
+                          strokeWidth={entry.details.inflows.some(inf => inf.isFigurative) ? 1 : 0}
+                          radius={index === 0 ? [4, 4, 0, 0] : [2, 2, 0, 0]}
+                        />
+                      ))}
+                    </Bar>
+                    <Bar dataKey="negative" stackId="stack">
+                      {cashFlows.map((entry, index) => (
+                        <Cell 
+                          key={`cell-neg-${index}`} 
+                          fill={'#EF4444'} 
+                          stroke={'none'}
+                          strokeWidth={0}
+                          radius={[0, 0, 4, 4]}
+                        />
+                      ))}
+                    </Bar>
+  
+                    {showCumulative && (
+                      <Line 
+                        type="monotone" 
+                        dataKey="cumulative" 
+                        stroke="#2563eb" 
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 6, strokeWidth: 0 }}
+                      />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
           {/* Data Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-black/5 overflow-hidden">
-            <div className="px-6 py-4 border-b border-black/5 bg-black/[0.02]">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-black/40">Dettaglio Flussi</h3>
+            <div className="p-4 sm:p-6 border-b border-black/5 flex items-center justify-between bg-black/[0.02]">
+              <h3 className="text-[11px] font-bold text-black/40 uppercase tracking-[0.2em]">Dettaglio Flussi</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[600px] sm:min-w-0">
                 <thead>
-                  <tr className="text-[10px] font-bold uppercase tracking-widest text-black/40 border-b border-black/5">
-                    <th className="px-6 py-4">Periodo</th>
-                    <th className="px-6 py-4">Descrizione</th>
-                    <th className="px-6 py-4 text-right">Entrate</th>
-                    <th className="px-6 py-4 text-right">Uscite</th>
-                    <th className="px-6 py-4 text-right">Netto</th>
+                  <tr className="bg-black/[0.02] border-b border-black/5">
+                    <th className="px-4 sm:px-6 py-4 text-[10px] font-bold text-black/40 uppercase tracking-widest">Periodo</th>
+                    <th className="px-4 sm:px-6 py-4 text-[10px] font-bold text-black/40 uppercase tracking-widest">Descrizione</th>
+                    <th className="px-4 sm:px-6 py-4 text-[10px] font-bold text-black/40 uppercase tracking-widest text-right">Entrate</th>
+                    <th className="px-4 sm:px-6 py-4 text-[10px] font-bold text-black/40 uppercase tracking-widest text-right">Uscite</th>
+                    <th className="px-4 sm:px-6 py-4 text-[10px] font-bold text-black/40 uppercase tracking-widest text-right">Saldo</th>
                   </tr>
                 </thead>
-                <tbody className="text-sm font-medium">
+                <tbody className="divide-y divide-black/5">
                   {cashFlows.map((cf, idx) => (
                     <React.Fragment key={idx}>
-                      <tr className="border-b border-black/5 hover:bg-black/[0.01] transition-colors">
-                        <td className="px-6 py-4 font-mono text-xs align-top">{cf.time}</td>
-                        <td className="px-6 py-4 text-black/60 align-top">
-                          <div className="font-bold text-black">{cf.label}</div>
+                      <tr className="hover:bg-black/[0.01] transition-colors">
+                        <td className="px-4 sm:px-6 py-4 font-mono text-xs font-bold text-black/40 align-top">{cf.time}</td>
+                        <td className="px-4 sm:px-6 py-4 align-top">
+                          <div className="font-bold text-black text-sm sm:text-base">{cf.label}</div>
                           <div className="mt-2 space-y-1">
                             {cf.details.inflows.map((inf, i) => (
-                              <div key={i} className="text-[10px] flex justify-between gap-4">
-                                <span>{inf.label} {inf.isFigurative && <span className="text-black/30 italic">(Figurativo)</span>}</span>
-                                <span className="text-emerald-600">€ {inf.value.toLocaleString()}</span>
+                              <div key={i} className="text-[9px] sm:text-[10px] flex justify-between gap-4">
+                                <span className="text-black/60">{inf.label} {inf.isFigurative && <span className="text-black/30 italic">(Fig.)</span>}</span>
+                                <span className="text-emerald-600 font-mono">€ {inf.value.toLocaleString()}</span>
                               </div>
                             ))}
                             {cf.details.outflows.map((out, i) => (
-                              <div key={i} className="text-[10px] flex justify-between gap-4">
-                                <span>{out.label}</span>
-                                <span className="text-red-500">€ {out.value.toLocaleString()}</span>
+                              <div key={i} className="text-[9px] sm:text-[10px] flex justify-between gap-4">
+                                <span className="text-black/60">{out.label}</span>
+                                <span className="text-red-500 font-mono">€ {out.value.toLocaleString()}</span>
                               </div>
                             ))}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right text-emerald-600 align-top">€ {cf.positive.toLocaleString()}</td>
-                        <td className="px-6 py-4 text-right text-red-500 align-top">€ {Math.abs(cf.negative).toLocaleString()}</td>
-                        <td className={cn("px-6 py-4 text-right font-bold align-top", (cf.positive + cf.negative) >= 0 ? "text-emerald-600" : "text-red-600")}>
+                        <td className="px-4 sm:px-6 py-4 text-right text-emerald-600 align-top font-mono text-xs sm:text-sm">€ {cf.positive.toLocaleString()}</td>
+                        <td className="px-4 sm:px-6 py-4 text-right text-red-500 align-top font-mono text-xs sm:text-sm">€ {Math.abs(cf.negative).toLocaleString()}</td>
+                        <td className={cn("px-4 sm:px-6 py-4 text-right font-bold align-top font-mono text-xs sm:text-sm", (cf.positive + cf.negative) >= 0 ? "text-emerald-600" : "text-red-600")}>
                           € {(cf.positive + cf.negative).toLocaleString()}
                         </td>
                       </tr>
@@ -553,11 +568,12 @@ function InputGroup({ label, icon, value, onChange, suffix }: {
   );
 }
 
-function CustomTooltip({ active, payload, label }: any) {
-  if (active && payload && payload.length) {
+function CustomTooltip({ active, payload }: any) {
+  if (active && payload && payload.length > 0) {
     const pos = payload.find((p: any) => p.dataKey === 'positive')?.value || 0;
     const neg = payload.find((p: any) => p.dataKey === 'negative')?.value || 0;
     const data = payload[0].payload as CashFlowData;
+    if (!data) return null;
 
     return (
       <div className="bg-white p-4 rounded-xl shadow-2xl border border-black/5 min-w-[240px]">

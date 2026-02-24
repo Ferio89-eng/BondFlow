@@ -1,20 +1,32 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# BondFlow - Visualizzatore Flusso di Cassa
 
-# Run and deploy your AI Studio app
+Strumento professionale per visualizzare i flussi di cassa delle obbligazioni: cedole, tasse e commissioni bancarie con grafici a barre dettagliati.
 
-This contains everything you need to run your app locally.
+**Demo:** [https://ferio89-eng.github.io/BondFlow/](https://ferio89-eng.github.io/BondFlow/)
 
-View your app in AI Studio: https://ai.studio/apps/d152f784-4ccd-404a-bb2f-d18ad634f6dd
+## Funzionalità
 
-## Run Locally
+- Parametri configurabili: nominale, prezzi acquisto/vendita, cedola, tasse, commissioni
+- Periodicità cedole: annuale o semestrale
+- Visualizzazione entrate/uscite per periodo
+- Grafico cumulato e tabella dettagliata
+- Calcolo rendimento e profitto netto
 
-**Prerequisites:**  Node.js
+## Requisiti
 
+- Node.js 18+
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Avvio locale
+
+```bash
+npm install
+npm run dev
+```
+
+L'app sarà disponibile su `http://localhost:3000`.
+
+## Build per produzione
+
+```bash
+npm run build
+```
