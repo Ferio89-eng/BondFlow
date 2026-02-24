@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+/* Ottimizzazioni per Browser Web LG Smart TV - non influenzano desktop */
+[data-lg-tv] {
+  --lg-tv-min-font: 15px;
+  --lg-tv-input-min-h: 48px;
+}
+[data-lg-tv] header h1 { font-size: 1.75rem !important; }
+[data-lg-tv] header p, [data-lg-tv] header span { font-size: 0.95rem !important; }
+[data-lg-tv] input, [data-lg-tv] select {
+  min-height: var(--lg-tv-input-min-h) !important;
+  font-size: 1rem !important;
+  padding: 0.75rem 1rem !important;
+}
+[data-lg-tv] label { font-size: 0.9rem !important; }
+[data-lg-tv] h2, [data-lg-tv] h3 { font-size: 1rem !important; }
+[data-lg-tv] table th, [data-lg-tv] table td { font-size: 0.95rem !important; padding: 0.75rem 1rem !important; }
+[data-lg-tv] table td div span { font-size: 0.9rem !important; }
+[data-lg-tv] section span, [data-lg-tv] section p { font-size: min(1em, 0.95rem); }
+[data-lg-tv] .rounded-2xl { border-radius: 1rem; }
+/* Riduce ombre pesanti per performance su TV */
+[data-lg-tv] .shadow-xl { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+[data-lg-tv] .shadow-2xl { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+/* Checkbox/toggle più grandi per telecomando */
+[data-lg-tv] label.cursor-pointer { min-height: 48px; padding: 0.5rem 0; }
+[data-lg-tv] label.cursor-pointer > div:first-child { min-width: 44px; min-height: 44px; }
+/* Area grafico più leggibile da distanza */
+[data-lg-tv] main { padding: 1.5rem; }

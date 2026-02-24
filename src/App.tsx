@@ -34,6 +34,13 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Rileva browser LG Smart TV (Web0S, SmartTV, LG Browser) per ottimizzazioni visualizzazione */
+function isLgTvBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Web0S|SmartTV|LG Browser|Large Screen/i.test(ua);
+}
+
 interface CashFlowDetail {
   label: string;
   value: number;
@@ -188,10 +195,18 @@ export default function App() {
   const totalReturnPercent = (netProfit / initialInvestment) * 100;
   const avgAnnualReturn = durationYears > 0 ? totalReturnPercent / durationYears : totalReturnPercent;
 
+  const lgTv = isLgTvBrowser();
+
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans selection:bg-emerald-100">
+    <div 
+      className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans selection:bg-emerald-100"
+      data-lg-tv={lgTv ? 'true' : undefined}
+    >
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-black/5 px-4 sm:px-8 py-4 flex items-center justify-between">
+      <header className={cn(
+        "sticky top-0 z-50 border-b border-black/5 px-4 sm:px-8 py-4 flex items-center justify-between",
+        lgTv ? "bg-white" : "bg-white/80 backdrop-blur-md"
+      )}>
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="bg-emerald-600 p-2 sm:p-2.5 rounded-xl shadow-lg shadow-emerald-600/20">
             <TrendingUp className="text-white" size={20} />
@@ -429,18 +444,18 @@ export default function App() {
                       dataKey="time" 
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 11, fontWeight: 600, fill: '#00000040' }}
+                      tick={{ fontSize: lgTv ? 16 : 11, fontWeight: 600, fill: '#00000040' }}
                       dy={10}
                     />
                     <YAxis 
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 11, fontWeight: 600, fill: '#00000040' }}
+                      tick={{ fontSize: lgTv ? 16 : 11, fontWeight: 600, fill: '#00000040' }}
                       tickFormatter={(value) => `€${value.toLocaleString()}`}
                     />
                     <Tooltip 
                       cursor={{ fill: '#00000005' }}
-                      content={<CustomTooltip />}
+                      content={<CustomTooltip lgTv={lgTv} />}
                     />
                     <ReferenceLine y={0} stroke="#00000020" />
                     
@@ -568,24 +583,27 @@ function InputGroup({ label, icon, value, onChange, suffix }: {
   );
 }
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload, lgTv }: { active?: boolean; payload?: any[]; lgTv?: boolean }) {
   if (active && payload && payload.length > 0) {
     const pos = payload.find((p: any) => p.dataKey === 'positive')?.value || 0;
     const neg = payload.find((p: any) => p.dataKey === 'negative')?.value || 0;
     const data = payload[0].payload as CashFlowData;
     if (!data) return null;
+    const textCls = lgTv ? 'text-sm' : 'text-[10px]';
+    const detailCls = lgTv ? 'text-xs' : 'text-[9px]';
+    const valueCls = lgTv ? 'text-sm' : 'text-[11px]';
 
     return (
-      <div className="bg-white p-4 rounded-xl shadow-2xl border border-black/5 min-w-[240px]">
-        <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-3">{data.label}</p>
+      <div className={cn("bg-white p-4 rounded-xl shadow-2xl border border-black/5", lgTv ? "min-w-[280px]" : "min-w-[240px]")}>
+        <p className={cn("font-bold text-black/40 uppercase tracking-widest mb-3", textCls)}>{data.label}</p>
         
         <div className="space-y-3">
           {/* Inflows Detail */}
           <div className="space-y-1">
-            <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">Entrate</p>
+            <p className={cn("font-bold text-emerald-600 uppercase tracking-wider", detailCls)}>Entrate</p>
             {data.details.inflows.map((inf, i) => (
-              <div key={i} className="flex justify-between items-center text-[11px]">
-                <span className="text-black/60">{inf.label} {inf.isFigurative && <span className="text-[9px] text-black/30 italic">(Fig.)</span>}</span>
+              <div key={i} className={cn("flex justify-between items-center", valueCls)}>
+                <span className="text-black/60">{inf.label} {inf.isFigurative && <span className={cn("text-black/30 italic", detailCls)}>(Fig.)</span>}</span>
                 <span className="font-mono font-bold text-emerald-600">€ {inf.value.toLocaleString()}</span>
               </div>
             ))}
@@ -593,9 +611,9 @@ function CustomTooltip({ active, payload }: any) {
 
           {/* Outflows Detail */}
           <div className="space-y-1">
-            <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider">Uscite</p>
+            <p className={cn("font-bold text-red-500 uppercase tracking-wider", detailCls)}>Uscite</p>
             {data.details.outflows.map((out, i) => (
-              <div key={i} className="flex justify-between items-center text-[11px]">
+              <div key={i} className={cn("flex justify-between items-center", valueCls)}>
                 <span className="text-black/60">{out.label}</span>
                 <span className="font-mono font-bold text-red-500">€ {out.value.toLocaleString()}</span>
               </div>
@@ -604,15 +622,15 @@ function CustomTooltip({ active, payload }: any) {
 
           <div className="h-px bg-black/5 my-2" />
           
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-bold">Saldo Netto</span>
-            <span className={cn("text-sm font-mono font-bold", (pos + neg) >= 0 ? "text-emerald-600" : "text-red-600")}>
+          <div className={cn("flex justify-between items-center", lgTv ? "text-sm" : "text-xs")}>
+            <span className="font-bold">Saldo Netto</span>
+            <span className={cn("font-mono font-bold", lgTv ? "text-base" : "text-sm", (pos + neg) >= 0 ? "text-emerald-600" : "text-red-600")}>
               € {(pos + neg).toLocaleString()}
             </span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-blue-700">Cumulata</span>
-            <span className={cn("text-sm font-mono font-bold text-blue-700")}>
+          <div className={cn("flex justify-between items-center", lgTv ? "text-sm" : "text-xs")}>
+            <span className="font-bold text-blue-700">Cumulata</span>
+            <span className={cn("font-mono font-bold text-blue-700", lgTv ? "text-base" : "text-sm")}>
               € {data.cumulative.toLocaleString()}
             </span>
           </div>
