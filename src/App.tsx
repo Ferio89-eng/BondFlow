@@ -34,8 +34,20 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Toggle visivamente affidabile anche su browser TV - colori ad alto contrasto quando ON */
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+/** Toggle: stile ad alto contrasto solo su LG TV, stile standard su desktop */
+function Toggle({ checked, onChange, label, lgTv }: { checked: boolean; onChange: (v: boolean) => void; label: string; lgTv?: boolean }) {
+  const trackStyle = lgTv && checked
+    ? { backgroundColor: '#047857', border: '2px solid #064e3b', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.2)' }
+    : !checked
+      ? { backgroundColor: 'rgba(0,0,0,0.1)' }
+      : {};
+
+  const ballStyle = {
+    left: checked ? 20 : 4,
+    border: lgTv && checked ? '2px solid #064e3b' : '1px solid rgba(0,0,0,0.2)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.25)'
+  };
+
   return (
     <label className="flex items-center gap-3 cursor-pointer group shrink-0">
       <div className="relative flex items-center shrink-0 overflow-visible" style={{ width: 40, height: 20 }}>
@@ -46,21 +58,15 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
           className="sr-only"
         />
         <div
-          className="w-10 h-5 rounded-full transition-colors"
-          style={{
-            backgroundColor: checked ? '#047857' : 'rgba(0,0,0,0.1)',
-            border: checked ? '2px solid #064e3b' : 'none',
-            boxShadow: checked ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : 'none'
-          }}
+          className={cn(
+            "w-10 h-5 rounded-full transition-colors",
+            !lgTv && checked && "bg-emerald-600"
+          )}
+          style={trackStyle}
         />
         <div
-          className="absolute top-1 w-3 h-3 rounded-full transition-[left] duration-200"
-          style={{
-            left: checked ? 20 : 4,
-            backgroundColor: '#ffffff',
-            border: checked ? '2px solid #064e3b' : '1px solid rgba(0,0,0,0.2)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.25)'
-          }}
+          className="absolute top-1 w-3 h-3 rounded-full transition-[left] duration-200 bg-white"
+          style={ballStyle}
         />
       </div>
       <span className="text-xs font-bold text-black/60 uppercase tracking-wider">{label}</span>
@@ -356,10 +362,10 @@ export default function App() {
               </div>
 
               <div className="pt-4 space-y-4 border-t border-black/5 overflow-visible">
-                <Toggle checked={showCumulative} onChange={setShowCumulative} label="Mostra Cumulata" />
-                <Toggle checked={showNominal} onChange={setShowNominal} label="Mostra Nominale" />
-                <Toggle checked={includeNominalAtT0} onChange={setIncludeNominalAtT0} label="Nominale T0 Reale" />
-                <Toggle checked={sellAtMaturity} onChange={setSellAtMaturity} label="Vendita a Scadenza" />
+                <Toggle checked={showCumulative} onChange={setShowCumulative} label="Mostra Cumulata" lgTv={lgTv} />
+                <Toggle checked={showNominal} onChange={setShowNominal} label="Mostra Nominale" lgTv={lgTv} />
+                <Toggle checked={includeNominalAtT0} onChange={setIncludeNominalAtT0} label="Nominale T0 Reale" lgTv={lgTv} />
+                <Toggle checked={sellAtMaturity} onChange={setSellAtMaturity} label="Vendita a Scadenza" lgTv={lgTv} />
               </div>
             </div>
           </section>
